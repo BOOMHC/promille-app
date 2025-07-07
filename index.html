@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Promille Rechner</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>PROMILLE RECHNER🍻</h1>
+
+  <section id="status" style="display:none">
+    <h3>Aktuelle Promille: <span id="promille">0.00</span> ‰</h3>
+  </section>
+
+  <section id="setup">
+    <h2>Benutzerdaten</h2>
+
+    <label>Benutzername:
+      <input type="text" id="username" autocomplete="off">
+    </label>
+
+    <label>Gewicht (kg):
+      <input type="number" id="weight" min="1" autocomplete="off">
+    </label>
+
+    <label>Geschlecht:
+      <select id="gender">
+        <option value="male">Männlich</option>
+        <option value="female">Weiblich</option>
+      </select>
+    </label>
+
+    <button onclick="startPromilleBerechnung()">Starten</button>
+  </section>
+
+  <section id="drinks" style="display:none">
+    <h2>Getränk hinzufügen</h2>
+
+    <!-- Drink Slider -->
+    <!-- Drink Slider -->
+<div id="drinkSelector" style="text-align:center; margin: 30px 0;">
+  <img 
+    id="drinkImage" 
+    src="images/bier.png" 
+    alt="Getränk" 
+    class="drinkImage" 
+    draggable="false"
+  >
+</div>
+
+
+    <!-- Menge und Alkohol -->
+    <div id="drinkDetails">
+      <label>Menge (Liter): <span id="amountLabel">0.5</span> l
+        <input type="range" id="amount" min="0.02" max="1" step="0.01" value="0.5" oninput="updateDrinkLabels()">
+      </label>
+
+      <label>Alkoholgehalt: <span id="alcLabel">5.0</span> %
+        <input type="range" id="alcohol" min="1" max="60" step="0.1" value="5" oninput="updateDrinkLabels()">
+      </label>
+    </div>
+
+    <button id="addDrinkBtn" onclick="addDrink()">Hinzufügen</button>
+  </section>
+
+  <button onclick="resetApp()">Zurücksetzen</button>
+
+  <script src="script.js"></script>
+</body>
+</html>
