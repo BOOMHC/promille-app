@@ -16,58 +16,49 @@
 
   <section id="setup">
     <h2>Benutzerdaten</h2>
-
     <label>Benutzername:
       <input type="text" id="username" autocomplete="off">
     </label>
-
     <label>Gewicht (kg):
       <input type="number" id="weight" min="1" autocomplete="off">
     </label>
-
     <label>Geschlecht:
       <select id="gender">
         <option value="male">Männlich</option>
         <option value="female">Weiblich</option>
       </select>
     </label>
-
-    <button onclick="startPromilleBerechnung()">Starten</button>
+    <button class = "largebttn" onclick="startPromilleBerechnung()">Starten</button>
   </section>
 
   <section id="drinks" style="display:none">
     <h2>Getränk hinzufügen</h2>
-
     <div id="drinkSelector">
       <img id="drinkImage" src="images/bier.png" alt="Getränk" class="drinkImage" draggable="false">
     </div>
-
     <div id="drinkDetails">
       <label>Menge (Liter): <span id="amountLabel">0.5</span> l
         <input type="range" id="amount" min="0.02" max="1" step="0.01" value="0.5" oninput="updateDrinkLabels()">
       </label>
-
       <label>Alkoholgehalt: <span id="alcLabel">5.0</span> %
         <input type="range" id="alcohol" min="1" max="60" step="0.1" value="5" oninput="updateDrinkLabels()">
       </label>
     </div>
-
     <button id="addDrinkBtn" onclick="addDrink()">Trinken</button>
   </section>
 
-  <div style="display:flex; gap:2%;">
-    <button onclick="resetApp()" style="width:49%">Zurücksetzen</button>
-    <button id="toggleLeaderboardBtn" style="width:49%">Rangliste</button>
-  </div>
+  
 
-  <section id="leaderboardSection" style="display:none">
-    <h2>Top 10 Promille-Werte</h2>
+  <section id="leaderboardSection">
+    <h2>Top 4 Promille-Werte</h2>
     <table>
       <thead><tr><th>Platz</th><th>Name</th><th>Promille</th></tr></thead>
       <tbody id="leaderboardBody"></tbody>
     </table>
   </section>
-
+<div style="display:flex; gap:2%;">
+    <button onclick="resetApp()" style="width:100%">Zurücksetzen</button>
+  </div>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <script src="leaderboard.js"></script>
