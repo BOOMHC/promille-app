@@ -1,15 +1,22 @@
 // Basis-Parameter
 let userData = {};
 let drinks = [];
-
 // Beispiel-Daten für Drinks mit Bild-URLs, Standardmenge und Alkohol
+import { autoSubmitScore } from './leaderboard.js';
+
+window.onload = () => {
+  // ... anderer Code ...
+
+  setInterval(autoSubmitScore, 60000);
+};
+
 const drinksData = [
-  { type: "bier", name: "Bier", img: "images/bier.png", amount: 0.5, alc: 5.0 },
-  { type: "wein", name: "Wein", img: "images/wein.png", amount: 0.2, alc: 11.0 },
-  { type: "kabull", name: "Kabull", img: "images/kabull.png", amount: 0.04, alc: 40.0 },
-  { type: "monte", name: "Monte", img: "images/monte.png", amount: 0.2, alc: 10.0 },
-  { type: "shot", name: "Shot", img: "images/shot.png", amount: 0.04, alc: 40.0 },
-  { type: "veneziano", name: "Veneziano", img: "images/veneziano.png", amount: 0.2, alc: 10.0 }
+  { type: "bier", name: "Bier", img: "images/bier.png", amount: 0.33, alc: 5.3 },
+  { type: "wein", name: "Wein", img: "images/wein.png", amount: 0.2, alc: 14.0 },
+  { type: "kabull", name: "Kabull", img: "images/kabull.png", amount: 0.3, alc:12.0 },
+  { type: "monte", name: "Monte", img: "images/monte.png", amount: 0.1, alc: 23.0 },
+  { type: "shot", name: "Shot", img: "images/shot.png", amount: 0.04, alc: 30.0 },
+  { type: "veneziano", name: "Veneziano", img: "images/veneziano.png", amount: 0.4, alc: 10.0 }
 ];
 
 let currentDrinkIndex = 0;
@@ -260,4 +267,10 @@ window.onload = () => {
       drinkImage.style.transform = "translateX(0)";
     }, 200);
   }, 400);
+  document.getElementById("toggleLeaderboardBtn").addEventListener("click", () => {
+  const sec = document.getElementById("leaderboardSection");
+  sec.style.display = sec.style.display === "none" ? "block" : "none";
+});
+setInterval(autoSubmitScore, 60000); // alle 60000 ms = 1 Minute
+
 };
