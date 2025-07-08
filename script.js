@@ -1,14 +1,6 @@
-// Basis-Parameter
+// Inhalte aus Speicher laden
 let userData = {};
 let drinks = [];
-// Beispiel-Daten für Drinks mit Bild-URLs, Standardmenge und Alkohol
-import { autoSubmitScore } from './leaderboard.js';
-
-window.onload = () => {
-  // ... anderer Code ...
-
-  setInterval(autoSubmitScore, 60000);
-};
 
 const drinksData = [
   { type: "bier", name: "Bier", img: "images/bier.png", amount: 0.33, alc: 5.3 },
@@ -21,13 +13,91 @@ const drinksData = [
 
 let currentDrinkIndex = 0;
 
-// Funktion: Trinkzeit abhängig von Menge (Liter)
-// Beispiel: 0.33L → 10min, linear skaliert (30min pro Liter)
-function getTrinkzeitByMenge(menge) {
-  return menge * 30 * 60 * 1000; // ms
+// === Funktionen ===
+
+function updateDrinkLabels() {
+  document.getElementById("amountLabel").innerText = parseFloat(document.getElementById("amount").value).toFixed(2);
+  document.getElementById("alcLabel").innerText = parseFloat(document.getElementById("alcohol").value).toFixed(1);
 }
 
-// Login und Speicherung der Nutzerdaten
+function updateDrinkUI() {
+  const drink = drinksData[currentDrinkIndex];
+  const img = document.getElementById("drinkImage");
+  img.src = drink.img;
+  img.alt = drink.name;
+
+  document.getElementById("amount").value = drink.amount;
+  document.getElementById("alcohol").value = drink.alc;
+
+  updateDrinkLabels();
+}
+
+function getTrinkzeitByMenge(menge) {
+  return menge * 30 * 60 * 1000;
+}
+
+function calculatePromille() {
+  if (!userData.weight || !userData.gender) return 0;
+
+  const r = userData.gender === "male" ? 0.68 : 0.55;
+  const now = Date.now();
+
+  const abbauRate = userData.gender === "male" ? 0.12 : 0.10;
+  const abbauGrammProStd = abbauRate * userData.weight * r;
+
+  let aufgenommen = 0;
+  let abgebaut = 0;
+
+  for (const drink of drinks) {
+    const dauer = drink.timeEnd - drink.timeStart;
+    const absorbiert = Math.min(1, Math.max(0, (now - drink.timeStart) / dauer));
+    const alk = drink.grams * absorbiert;
+
+    aufgenommen += alk;
+
+    if (absorbiert > 0.2) {
+      const abbauStart = drink.timeStart + dauer * 0.2;
+      const abbauZeit = Math.max(0, now - abbauStart) / 3600000;
+      abgebaut += Math.min(alk, abbauGrammProStd * abbauZeit);
+    }
+  }
+
+  const netto = Math.max(0, aufgenommen - abgebaut);
+  return (netto / (userData.weight * r)).toFixed(2);
+}
+
+function updatePromille() {
+  const promille = calculatePromille();
+  const promilleSpan = document.getElementById("promille");
+  promilleSpan.innerText = promille;
+  const val = parseFloat(promille);
+  promilleSpan.style.color = val >= 1.5 ? "green" : val <= 0.1 ? "red" : "orange";
+}
+
+function addDrink() {
+  const now = Date.now();
+  const amount = parseFloat(document.getElementById("amount").value);
+  const alcVol = parseFloat(document.getElementById("alcohol").value);
+  const type = drinksData[currentDrinkIndex].type;
+
+  const ml = amount * 1000 * (alcVol / 100);
+  const grams = ml * 0.789;
+
+  drinks.push({
+    type,
+    grams,
+    timeStart: now,
+    timeEnd: now + getTrinkzeitByMenge(amount)
+  });
+
+  localStorage.setItem("drinks", JSON.stringify(drinks));
+  updatePromille();
+
+  const btn = document.getElementById("addDrinkBtn");
+  btn.disabled = true;
+  setTimeout(() => btn.disabled = false, 1000);
+}
+
 function loginAndSaveUser() {
   const username = document.getElementById("username").value.trim();
   const weight = parseFloat(document.getElementById("weight").value);
@@ -47,198 +117,63 @@ function loginAndSaveUser() {
 
   drinks = JSON.parse(localStorage.getItem("drinks") || "[]");
   updatePromille();
-
   updateDrinkUI();
 }
 
-// Getränk hinzufügen
-function addDrink() {
-  const now = Date.now();
-  const amount = parseFloat(document.getElementById("amount").value); // Liter
-  const alcVol = parseFloat(document.getElementById("alcohol").value); // Vol.-%
-  const type = drinksData[currentDrinkIndex].type;
-
-  const alcoholMl = amount * 1000 * (alcVol / 100);
-  const density = 0.789; // g/ml
-  const alcoholGrams = alcoholMl * density;
-
-  if (!alcoholGrams || alcoholGrams <= 0) {
-    alert("Ungültige Eingabe");
-    return;
-  }
-
-  const trinkzeit = getTrinkzeitByMenge(amount);
-
-  drinks.push({
-    type,
-    grams: alcoholGrams,
-    timeStart: now,
-    timeEnd: now + trinkzeit
-  });
-
-  localStorage.setItem("drinks", JSON.stringify(drinks));
-  updatePromille();
-
-  // Cooldown: Button kurz deaktivieren, damit nicht doppelt gedrückt wird
-  const btn = document.querySelector("#drinks button");
-  btn.disabled = true;
-  setTimeout(() => {
-    btn.disabled = false;
-  }, 1000);
-}
-
-// Promille berechnen (mit realistischem Abbaubeginn)
-function calculatePromille() {
-  if (!userData.weight || !userData.gender) return 0;
-
-  const r = userData.gender === "male" ? 0.68 : 0.55;
-  const now = Date.now();
-
-  // Geschlechtsabhängiger Abbauwert in ‰/h
-  let abbauRatePromilleProStunde = 0.11;
-  if (userData.gender === "male") abbauRatePromilleProStunde = 0.12;
-  if (userData.gender === "female") abbauRatePromilleProStunde = 0.10;
-
-  const abbauGramsProStunde = abbauRatePromilleProStunde * userData.weight * r;
-
-  let totalAlkAufgenommen = 0;
-  let totalAbbauGrams = 0;
-
-  const abbauStartSchwelle = 0.2; // erst wenn 20 % aufgenommen
-
-  for (let drink of drinks) {
-    const trinkDauer = Math.max(1, drink.timeEnd - drink.timeStart);
-
-    let absorption = 0;
-    if (now <= drink.timeStart) {
-      absorption = 0;
-    } else if (now >= drink.timeEnd) {
-      absorption = 1;
-    } else {
-      absorption = (now - drink.timeStart) / trinkDauer;
-    }
-
-    const aufgenommen = drink.grams * absorption;
-    totalAlkAufgenommen += aufgenommen;
-
-    if (absorption < abbauStartSchwelle) continue;
-
-    const abbauStart = drink.timeStart + trinkDauer * abbauStartSchwelle;
-    const abbauZeitStd = Math.max(0, (now - abbauStart) / 3600000);
-
-    const abgebaut = Math.min(aufgenommen, abbauGramsProStunde * abbauZeitStd);
-    totalAbbauGrams += abgebaut;
-  }
-
-  const nettoAlk = Math.max(0, totalAlkAufgenommen - totalAbbauGrams);
-  const promille = nettoAlk / (userData.weight * r);
-
-  return promille.toFixed(2);
-}
-
-// Promilleanzeige aktualisieren
-function updatePromille() {
-  const promille = calculatePromille();
-  const promilleDisplay = document.getElementById("promille");
-  promilleDisplay.innerText = promille;
-
-  const value = parseFloat(promille);
-  promilleDisplay.style.color =
-    value >= 1.5 ? "green" :
-    value <= 0.1 ? "red" :
-    "orange";
-}
-
-// Labels bei Slideränderung aktualisieren
-function updateDrinkLabels() {
-  const amount = parseFloat(document.getElementById("amount").value);
-  const alc = parseFloat(document.getElementById("alcohol").value);
-  document.getElementById("amountLabel").innerText = amount.toFixed(2);
-  document.getElementById("alcLabel").innerText = alc.toFixed(1);
-}
-
-// Update UI wenn Drink gewechselt wird
-function updateDrinkUI() {
-  const drink = drinksData[currentDrinkIndex];
-
-  // Bild setzen
-  const img = document.getElementById("drinkImage");
-  img.src = drink.img;
-  img.alt = drink.name;
-
-  // Slider-Werte setzen
-  document.getElementById("amount").value = drink.amount;
-  document.getElementById("alcohol").value = drink.alc;
-
-  updateDrinkLabels();
-}
-
-// Swipe-Handling für Drink-Bilder
-const drinkImage = document.getElementById("drinkImage");
-
-let startX = 0;
-let currentX = 0;
-let isDragging = false;
-
-drinkImage.addEventListener("pointerdown", (e) => {
-  isDragging = true;
-  startX = e.clientX;
-  drinkImage.style.transition = "none";
-  drinkImage.setPointerCapture(e.pointerId);
-});
-
-drinkImage.addEventListener("pointermove", (e) => {
-  if (!isDragging) return;
-  currentX = e.clientX;
-  const deltaX = currentX - startX;
-  drinkImage.style.transform = translateX($,{deltaX},px);
-});
-
-drinkImage.addEventListener("pointerup", (e) => {
-  if (!isDragging) return;
-  isDragging = false;
-  drinkImage.style.transition = "transform 0.3s ease";
-
-  const deltaX = e.clientX - startX;
-
-  if (deltaX > 50) {
-    // Swipe nach rechts → vorheriger Drink
-    currentDrinkIndex = (currentDrinkIndex - 1 + drinksData.length) % drinksData.length;
-  } else if (deltaX < -50) {
-    // Swipe nach links → nächster Drink
-    currentDrinkIndex = (currentDrinkIndex + 1) % drinksData.length;
-  }
-
-  updateDrinkUI();
-
-  drinkImage.style.transform = "translateX(0)";
-});
-
-drinkImage.addEventListener("pointercancel", () => {
-  isDragging = false;
-  drinkImage.style.transition = "transform 0.3s ease";
-  drinkImage.style.transform = "translateX(0)";
-});
-
-// App zurücksetzen
-function resetApp() {
-  if (confirm("Willst du wirklich alles zurücksetzen?")) {
-    localStorage.removeItem("userData");
-    localStorage.removeItem("drinks");
-    location.reload();
-  }
-}
-
-// App starten / Login speichern
 function startPromilleBerechnung() {
   loginAndSaveUser();
 }
 
-// Initialisierung bei Seitenladezeit
+function resetApp() {
+  if (confirm("Zurücksetzen?")) {
+    localStorage.clear();
+    location.reload();
+  }
+}
+
+// Swipe
+let startX = 0, isDragging = false;
+const img = document.getElementById("drinkImage");
+
+img.addEventListener("pointerdown", (e) => {
+  isDragging = true;
+  startX = e.clientX;
+  img.style.transition = "none";
+});
+
+img.addEventListener("pointermove", (e) => {
+  if (!isDragging) return;
+  const dx = e.clientX - startX;
+  img.style.transform = `translateX(${dx}px)`;
+});
+
+img.addEventListener("pointerup", (e) => {
+  if (!isDragging) return;
+  isDragging = false;
+  img.style.transition = "transform 0.3s ease";
+
+  const dx = e.clientX - startX;
+  if (dx > 50) currentDrinkIndex = (currentDrinkIndex - 1 + drinksData.length) % drinksData.length;
+  else if (dx < -50) currentDrinkIndex = (currentDrinkIndex + 1) % drinksData.length;
+
+  updateDrinkUI();
+  img.style.transform = "translateX(0)";
+});
+
+img.addEventListener("pointercancel", () => {
+  isDragging = false;
+  img.style.transform = "translateX(0)";
+});
+
+document.getElementById("toggleLeaderboardBtn").addEventListener("click", () => {
+  const sec = document.getElementById("leaderboardSection");
+  sec.style.display = sec.style.display === "none" ? "block" : "none";
+});
+
 window.onload = () => {
-  const savedUser = localStorage.getItem("userData");
-  if (savedUser) {
-    userData = JSON.parse(savedUser);
+  const saved = localStorage.getItem("userData");
+  if (saved) {
+    userData = JSON.parse(saved);
     document.getElementById("username").value = userData.username;
     document.getElementById("weight").value = userData.weight;
     document.getElementById("gender").value = userData.gender;
@@ -246,41 +181,12 @@ window.onload = () => {
     document.getElementById("setup").style.display = "none";
     document.getElementById("drinks").style.display = "block";
     document.getElementById("status").style.display = "block";
-  } else {
-    document.getElementById("setup").style.display = "block";
-    document.getElementById("drinks").style.display = "none";
-    document.getElementById("status").style.display = "none";
   }
 
   drinks = JSON.parse(localStorage.getItem("drinks") || "[]");
 
-  updateDrinkLabels();
   updateDrinkUI();
-  setInterval(updatePromille, 60000);
   updatePromille();
-
-  // Ladeanimation: kurzes Wischen nach links und zurück
-  setTimeout(() => {
-    drinkImage.style.transition = "transform 0.2s ease";
-    drinkImage.style.transform = "translateX(-30px)";
-    setTimeout(() => {
-      drinkImage.style.transform = "translateX(0)";
-    }, 200);
-  }, 400);
-  document.getElementById("toggleLeaderboardBtn").addEventListener("click", () => {
-  const sec = document.getElementById("leaderboardSection");
-  sec.style.display = sec.style.display === "none" ? "block" : "none";
-});
-setInterval(autoSubmitScore, 60000); // alle 60000 ms = 1 Minute
-
+  setInterval(updatePromille, 60000);
+  setInterval(autoSubmitScore, 60000);
 };
-window.onload = () => {
-  // ... dein ganzer bestehender Code ...
-
-  setInterval(() => {
-    if (typeof window.autoSubmitScore === "function") {
-      window.autoSubmitScore();
-    }
-  }, 60000); // alle 60 Sekunden
-};
-
