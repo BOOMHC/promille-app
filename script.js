@@ -274,3 +274,13 @@ window.onload = () => {
 setInterval(autoSubmitScore, 60000); // alle 60000 ms = 1 Minute
 
 };
+window.onload = () => {
+  // ... dein ganzer bestehender Code ...
+
+  setInterval(() => {
+    if (typeof window.autoSubmitScore === "function") {
+      window.autoSubmitScore();
+    }
+  }, 60000); // alle 60 Sekunden
+};
+
