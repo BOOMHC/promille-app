@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Promille Rechner</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <h1>PROMILLE RECHNER🍻</h1>
@@ -15,22 +15,18 @@
 
   <section id="setup">
     <h2>Benutzerdaten</h2>
-
     <label>Benutzername:
       <input type="text" id="username" autocomplete="off">
     </label>
-
     <label>Gewicht (kg):
       <input type="number" id="weight" min="1" autocomplete="off">
     </label>
-
     <label>Geschlecht:
       <select id="gender">
         <option value="male">Männlich</option>
         <option value="female">Weiblich</option>
       </select>
     </label>
-
     <button onclick="startPromilleBerechnung()">Starten</button>
   </section>
 
@@ -38,35 +34,26 @@
     <h2>Getränk hinzufügen</h2>
 
     <div id="drinkSelector" style="text-align:center; margin: 30px 0;">
-      <img 
-        id="drinkImage" 
-        src="images/bier.png" 
-        alt="Getränk" 
-        class="drinkImage" 
-        draggable="false"
-      >
+      <img id="drinkImage" src="images/bier.png" alt="Getränk" class="drinkImage" draggable="false">
     </div>
 
     <div id="drinkDetails">
       <label>Menge (Liter): <span id="amountLabel">0.5</span> l
         <input type="range" id="amount" min="0.02" max="1" step="0.01" value="0.5" oninput="updateDrinkLabels()">
       </label>
-
       <label>Alkoholgehalt: <span id="alcLabel">5.0</span> %
         <input type="range" id="alcohol" min="1" max="60" step="0.1" value="5" oninput="updateDrinkLabels()">
       </label>
     </div>
 
-    <button id="addDrinkBtn" onclick="addDrink()">Hinzufügen</button>
+    <button onclick="addDrink()">Hinzufügen</button>
   </section>
 
-  <!-- Reset + Bestenliste nebeneinander -->
   <div style="display:flex; gap:2%;">
     <button onclick="resetApp()" style="width:49%">Zurücksetzen</button>
-    <button id="toggleLeaderboardBtn" style="width:49%">Bestenliste</button>
+    <button onclick="toggleLeaderboard()" style="width:49%">Bestenliste</button>
   </div>
 
-  <!-- Leaderboard -->
   <section id="leaderboardSection" style="display:none">
     <h2>Top 10 Promille-Werte</h2>
     <table>
@@ -75,7 +62,12 @@
     </table>
   </section>
 
-  <script type="module" src="leaderboard.js"></script>
-  <script type="module" src="script.js"></script>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js"></script>
+
+  <!-- Eigene Skripte -->
+  <script src="leaderboard.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
