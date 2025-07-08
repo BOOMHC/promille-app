@@ -5,7 +5,7 @@ let drinks = [];
 const drinksData = [
   { type: "bier", name: "Bier", img: "images/bier.png", amount: 0.33, alc: 5.3 },
   { type: "wein", name: "Wein", img: "images/wein.png", amount: 0.2, alc: 14.0 },
-  { type: "kabull", name: "Kabull", img: "images/kabull.png", amount: 0.3, alc:12.0 },
+  { type: "kabull", name: "Kabull", img: "images/kabull.png", amount: 0.3, alc: 12.0 },
   { type: "monte", name: "Monte", img: "images/monte.png", amount: 0.1, alc: 23.0 },
   { type: "shot", name: "Shot", img: "images/shot.png", amount: 0.04, alc: 30.0 },
   { type: "veneziano", name: "Veneziano", img: "images/veneziano.png", amount: 0.4, alc: 10.0 }
@@ -165,10 +165,6 @@ img.addEventListener("pointercancel", () => {
   img.style.transform = "translateX(0)";
 });
 
-document.getElementById("toggleLeaderboardBtn").addEventListener("click", () => {
-  const sec = document.getElementById("leaderboardSection");
-  sec.style.display = sec.style.display === "none" ? "block" : "none";
-});
 
 window.onload = () => {
   const saved = localStorage.getItem("userData");
@@ -187,6 +183,7 @@ window.onload = () => {
 
   updateDrinkUI();
   updatePromille();
-  setInterval(updatePromille, 60000);
-  setInterval(autoSubmitScore, 60000);
+
+  // Alle 10 Sekunden Promille und Score aktualisieren
+  setInterval(updatePromille, 10000);
 };
